@@ -13,6 +13,7 @@
     "update": "2020-01-30",
     "alpine": {
         "version": 3.10,
+        "shell": "ash",
         "aarch64": "http://dl-cdn.alpinelinux.org/alpine/v3.10/releases/aarch64/alpine-minirootfs-3.10.0-aarch64.tar.gz",
         "armhf": "http://dl-cdn.alpinelinux.org/alpine/v3.10/releases/armhf/alpine-minirootfs-3.10.0-armhf.tar.gz",
         "amd64": "http://dl-cdn.alpinelinux.org/alpine/v3.10/releases/x86_64/alpine-minirootfs-3.10.0-x86_64.tar.gz",
@@ -67,7 +68,7 @@
         "zip": "xz"
     },
     "ubuntu": {
-        "version": 19.10,
+        "version": "eoan",
         "aarch64": "https://partner-images.canonical.com/core/eoan/current/ubuntu-eoan-core-cloudimg-arm64-root.tar.gz",
         "armhf": "https://partner-images.canonical.com/core/eoan/current/ubuntu-eoan-core-cloudimg-armhf-root.tar.gz",
         "amd64": "https://partner-images.canonical.com/core/eoan/current/ubuntu-eoan-core-cloudimg-amd64-root.tar.gz",
@@ -76,7 +77,7 @@
         "zip": "gz"
     },
     "ubuntults": {
-        "version": 18.04,
+        "version": "bionic",
         "aarch64": "https://partner-images.canonical.com/core/bionic/current/ubuntu-bionic-core-cloudimg-arm64-root.tar.gz",
         "armhf": "https://partner-images.canonical.com/core/bionic/current/ubuntu-bionic-core-cloudimg-armhf-root.tar.gz",
         "amd64": "https://partner-images.canonical.com/core/bionic/current/ubuntu-bionic-core-cloudimg-i386-root.tar.gz",
