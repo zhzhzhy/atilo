@@ -4,10 +4,11 @@ import os
 import tarfile
 import requests
 import json
-from tqdm import tqdm
 import hashlib
 import io
 import sys
+from tqdm import tqdm
+from prettytable import PrettyTable 
 
 
 home = os.getenv('HOME')
@@ -47,7 +48,7 @@ def load_local():
                     'version': atilo_version
                 }
             }
-            json.dump(data,f)
+            json.dump(data,indent=4,fp=f)
     with open(atilo_config,'r') as f:
         config = json.load(f)
     return config
@@ -59,17 +60,35 @@ def get_list():
         exit(1)
     return r.json()
 
+def show_list():
+    lists = get_list()
+    config = load_local()
+    table = PrettyTable()
+    arch = check_arch()
+    table.field_names = ["Name","Version","Installed","Installable"]
+    for i in lists.get('linux'):
+        name = i
+        infos = lists.get(name)
+        version = infos.get ('version')
+        installed = (config.keys()).__contains__(name)
+        installable = (infos.keys()).__contains__(arch)
+        table.add_row([name,version,installed,installable])
+    print(table.get_string())
+
 def pull_image(distro):
-    arch = check_arch
+    arch = check_arch()
     lists = get_list()
     config = load_local()
     if distro in config.keys():
         print('You have installed ' + distro)
         exit(1)
-    if not distro in lists.keys():
+    if distro not in lists.keys():
         print(distro + ' not found')
         exit(1)
     infos = lists.get(distro)
+    if arch not in infos.keys():
+        print(distro + ' not suppoer your arch')
+        exit(1)
     url = infos.get(arch)
     print('Pulling image')
     r = requests.get(url,stream=True)
@@ -77,10 +96,10 @@ def pull_image(distro):
         print('Can''t pull the image')
         print('Network Error')
         exit(1)
-    total_size = r.headers.get('Content-Length')
+    total_size = int(r.headers.get('Content-Length'))
     block_size = io.DEFAULT_BUFFER_SIZE
     t = tqdm(total=total_size,unit='iB',unit_scale=True)
-    with open(atilo_tmp.join(distro),'wb') as f:
+    with open(atilo_tmp + distro,'wb') as f:
         for chunk in r.iter_content(block_size):
             t.update(len(chunk))
             f.write(chunk)
@@ -88,7 +107,7 @@ def pull_image(distro):
     t.close()
     if infos.get('check') == 'ubuntu':
         check_url = 'https://partner-images.canonical.com/core/' + infos.get('version') + '/current/MD5SUMS'
-        check_sum_ubuntu(url,distro)
+        check_sum_ubuntu(distro,check_url)
     elif infos.get('check') == 'no':
         print(distro + ' has no check method')
         print('skiping')
@@ -100,16 +119,32 @@ def pull_image(distro):
         extract_file(distro,infos.get('zip'))
     else:
         extract_fedora()
+    config_image(distro,infos)
+
+def remove_image(distro):
+    distro_path = atilo_home + distro
+    print('Removing image '+ distro)
+    os.system('chmod -R 777 ' + distro_path)
+    os.system('rm -rf ' + distro_path)
+    config = load_local()
+    del config[distro]
+    with open(atilo_config,'w') as f:
+        json.dump(config,indent=4,fp=f)
+
 
 def config_image(distro,infos):
+    print('Configuring image')
     distro_path = atilo_home + distro
     resolv_conf = distro_path + '/etc/resolv.conf'
     with open(resolv_conf,'w') as f:
         f.write('nameserver 1.1.1.1\n')
         f.write('nameserver 8.8.8.8\n')
-    with open(atilo_config,'r') as f:
-        config_list = json.load(f)
-    config_list
+    config = load_local()
+    config.update({distro : infos})
+    with open(atilo_config,'w') as f:
+        json.dump(config,indent=4,fp=f)
+    print('All done')
+    print('Run it with atilo run ' + distro)
     
 def extract_file(distro,zip_m):
     distro_path = atilo_home + distro
@@ -136,7 +171,8 @@ def extract_fedora():
     
 
 def check_sum(distro,url,check):
-    r = requests.get('url')
+    print('Checking file integrity')
+    r = requests.get(url)
     file_path = atilo_tmp + distro
     if not r.status_code == 200:
         print('Can''t get checksum file,are you sure to continue? [y/N]',end=' ')
@@ -146,7 +182,8 @@ def check_sum(distro,url,check):
             print('Exiting')
             os.remove(file_path)
             exit(1)
-
+        else:
+            return
     sum_calc = hashlib.md5() if check == 'md5' else  hashlib.sha256()
     total_size = os.path.getsize(file_path)
     block_size = io.DEFAULT_BUFFER_SIZE
@@ -159,6 +196,7 @@ def check_sum(distro,url,check):
     f.close()
 
     if r.text.__contains__(sum_calc.hexdigest()):
+        print('Checksum successfully')
         return 0
     else:
         print('Checksum error')
@@ -167,7 +205,7 @@ def check_sum(distro,url,check):
         exit(1)
 
 def check_sum_ubuntu(distro,url):
-    r = requests(url)
+    r = requests.get(url)
     file_path = atilo_tmp + distro
     if not r.status_code == 200:
         print('Can''t get checksum file,are you sure to continue? [y/n]',end=' ')
@@ -196,21 +234,60 @@ def check_sum_ubuntu(distro,url):
         os.remove(file_path)
         exit(1)
 
-    
+def run_image(arg):
+    distro = arg[0]
+    config = load_local()
+    if not distro in config.keys():
+        print('You don''t have ' + distro + 'image')
+        print('Pull it before running it')
+        exit(1)
+    distro_path = atilo_home + distro
+    infos = config.get(distro)
+    command = ''
+    command += 'proot'
+    command += ' --link2symlink'
+    command += ' -0'
+    command += ' -S'
+    command += distro
+    command += ' -b /sys'
+    command += ' -b /dev'
+    command += ' -b /proc'
+#   command += ' -b /sdcard'
+#   command += ' -b /system'
+#   command += ' -b /data/data/com.termux/files/home'
+    command += ' -w /root'
+    command += ' /usr/bin/env -i'
+    command += ' HOME=/root'
+    command += ' LANG=C.UTF-8'
+    command += ' PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin'
+    command += ' TERM=xterm-256color'
+    command += ' /bin/'
+    if 'shell' in infos.keys():
+        command += infos.get('shell')
+    else:
+        command += 'bash'
+    command += ' --login'
+    if len(arg) > 1:
+        ext_com = ' '.join(arg[1:])
+        os.system(command + ' -c ' + ext_com)
+    else:
+        os.system(command)
 
 def show_help():
     print('Atilo\t\t' + atilo_version )
     print('Usage: atilo [Command] [Argument]\n')
     print('Atilo is a bash script to help you install some GNU/Linux distributions on Termux.\n')
     print('Commands:')
-    print('images\t\t list available images')
-    print('rm\t\t remove installed images')
+    print('list\t\t list available images')
+    print('remove\t\t remove installed images')
     print('pull\t\t pulling an image')
     print('run\t\t running a command in a new container.')
     print('help\t\t show this help.\n')
     
 
 if __name__ == "__main__":
+    check_dir()
+    
     if len(sys.argv) == 1:
         show_help()
         print('A command is needed.')
@@ -226,7 +303,25 @@ if __name__ == "__main__":
             exit(1)
         else:
             pull_image(sys.argv[2])
-    elif sys.argv[1] == 'list'
-
-
+    elif sys.argv[1] == 'list':
+        show_list()
+    elif sys.argv[1] == 'remove':
+        if len(sys.argv) < 3:
+            print('You need to specific a image from list.')
+            exit(1)
+        elif len(sys.argv) >3:
+            print('Too many arguments.')
+            exit(1)
+        else:
+            remove_image(sys.argv[2])
+    elif sys.argv[1] == 'run':
+        if len(sys.argv) < 3:
+            print('You need to specific a image from list.')
+            exit(1)
+        else:
+            run_image(sys.argv[2:])
+    else:
+        print('Unknown command')
+        exit(1)
+    
     

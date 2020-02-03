@@ -48,7 +48,7 @@
         "version": 31,
         "aarch64": "https://dl.fedoraproject.org/pub/fedora/linux/releases/31/Container/aarch64/images/Fedora-Container-Base-31-1.9.aarch64.tar.xz",
         "amd64": "https://dl.fedoraproject.org/pub/fedora/linux/releases/31/Container/x86_64/images/Fedora-Container-Base-31-1.9.x86_64.tar.xz",
-        "check": "fedora",
+        "check": "no",
         "zip": "fedora"
     },
     "kali": {
