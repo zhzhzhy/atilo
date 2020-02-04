@@ -160,7 +160,7 @@ def extract_fedora():
     distro_path = atilo_home + 'fedora'
     print('Extracting image')
     zip_f = tarfile.open(file_path)
-    for i in zip_f.list():
+    for i in zip_f.getnames():
         if i.__contains__('layer.tar'):
             zip_name = i
     zip_f.close()
@@ -247,8 +247,8 @@ def run_image(arg):
     command += 'proot'
     command += ' --link2symlink'
     command += ' -0'
-    command += ' -S'
-    command += distro
+    command += ' -S '
+    command += distro_path
     command += ' -b /sys'
     command += ' -b /dev'
     command += ' -b /proc'
@@ -262,6 +262,7 @@ def run_image(arg):
     command += ' PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin'
     command += ' TERM=xterm-256color'
     command += ' /bin/'
+    os.unsetenv('LD_PRELOAD')
     if 'shell' in infos.keys():
         command += infos.get('shell')
     else:
