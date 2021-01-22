@@ -165,16 +165,12 @@ def extract_file(distro,zip_m):
     if os.path.isdir(distro_path):
         os.system('chmod -R 777 ' + distro_path)
         os.system('rm -rf ' + distro_path)
-    if distro == 'arch':
-        print('Extracting image')
+
+    zip_f = tarfile.open(file_path,'r:'+zip_m)
+    if not os.path.isdir(distro_path):
         os.mkdir(distro_path)
-        os.system('proot --link2symlink tar -zxpf ' + file_path + ' -C ' + distro_path + ' 2> /dev/null')
-    else:
-        zip_f = tarfile.open(file_path,'r:'+zip_m)
-        if not os.path.isdir(distro_path):
-            os.mkdir(distro_path)
-        print('Extracting image')
-        zip_f.extractall(distro_path,numeric_owner=True)
+    print('Extracting image')
+    zip_f.extractall(distro_path,numeric_owner=True)
 
 def extract_fedora():
     file_path = atilo_tmp+ 'fedora'
@@ -275,9 +271,6 @@ def run_image(arg):
     command += ' --link2symlink'
     command += ' -S '
     command += distro_path
-    command += ' -b /sys'
-    command += ' -b /dev'
-    command += ' -b /proc'
 #   command += ' -b /sdcard'
 #   command += ' -b /system'
 #   command += ' -b /data/data/com.termux/files/home'
@@ -292,7 +285,18 @@ def run_image(arg):
     if 'shell' in infos.keys():
         command += infos.get('shell')
     else:
-        command += 'bash'
+        with open(distro_path+"/etc/passwd") as f:
+            passwd_dict={}
+            for line in f:
+                args = line.split(":")
+                passwd_dict[args[0]]=args[6]
+
+            shell=passwd_dict['root'].strip().split('/')
+            if (shell[-1] != '' and len(shell[-1]) != 0):
+                command += shell[-1]
+            else:
+                command += 'bash'
+
     command += ' --login'
     if len(arg) > 1:
         ext_com = ' '.join(arg[1:])

@@ -9,8 +9,8 @@ A program to install linux on termux
 ## Installation
 
 ``` bash
-echo "deb [trusted=yes arch=all] https://yadominjinta.github.io/files/ termux extras" >> $PREFIX/etc/apt/sources.list
-pkg in atilo
+echo "deb [trusted=yes arch=all] https://yadominjinta.github.io/files/ termux extras" >> $PREFIX/etc/apt/sources.list.d/atilo.list
+apt update && apt install atilo
 ```
 
 ## Usage
@@ -35,15 +35,13 @@ help             show this help.
 
 | Distribution  | aarch64 |  arm  | x86_64 | i686  |
 | ------------- | :-----: | :---: | :----: | :---: |
-| Arch          |    √    |   √   |   ×    |   ×   |
 | Alpine        |    √    |   √   |   √    |   √   |
 | CentOS        |    √    |   ×   |   √    |   ×   |
 | Debian        |    √    |   √   |   √    |   √   |
-| Fedora        |    √    |   ×   |   √    |   ×   |
+| Fedora        |    √    |   √   |   √    |   ×   |
 | Kali          |    √    |   √   |   √    |   √   |
 | openSUSE      |    √    |   √   |   ×    |   ×   |
 | Ubuntu        |    √    |   √   |   √    |   √   |
-| Ubuntu LTS    |    √    |   √   |   √    |   √   |
 
 ## GUI
 

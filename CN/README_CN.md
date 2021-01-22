@@ -7,8 +7,8 @@
 ## 安装
 
 ``` bash
-echo "deb [trusted=yes arch=all] https://yadominjinta.github.io/files/ termux extras" >> $PREFIX/etc/apt/sources.list
-pkg in atilo-cn
+echo "deb [trusted=yes arch=all] https://yadominjinta.github.io/files/ termux extras" >> $PREFIX/etc/apt/sources.list.d/atilo.list
+apt update && apt install atilo-cn
 ```
 
 ## 使用方法
@@ -20,10 +20,11 @@ Usage: atilo [命令] [参数]
 Atilo 是一个用来帮助你在termux上安装不同的GNU/Linux发行版的程序
 
 命令:
-list             列出可用镜像
-images           移除本地的镜像
+images           列出可用镜像
+remove           移除本地的镜像
 pull             拉取远的镜像
 run              运行镜像
+clean            清除缓存
 help             帮助
 ```
 
@@ -31,15 +32,13 @@ help             帮助
 
 | 发行版        | aarch64 |  arm  | x86_64 | i686  |
 | ------------- | :-----: | :---: | :----: | :---: |
-| Arch          |    √    |   √   |   ×    |   ×   |
 | Alpine        |    √    |   √   |   √    |   √   |
 | CentOS        |    √    |   √   |   √    |   √   |
 | Debian        |    √    |   √   |   √    |   √   |
-| Fedora        |    √    |   ×   |   √    |   ×   |
+| Fedora        |    √    |   √   |   √    |   ×   |
 | Kali          |    √    |   √   |   √    |   √   |
 | openSUSE      |    √    |   ×   |   √    |   √   |
-| Ubuntu Cosmic |    √    |   √   |   √    |   √   |
-| Ubuntu LTS    |    √    |   √   |   √    |   √   |
+| Ubuntu        |    √    |   √   |   √    |   √   |
 
 ## 图形
 
